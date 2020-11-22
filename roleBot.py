@@ -129,4 +129,4 @@ async def inventory(ctx,adventure: str = None,name: str = None):
 		
 
 
-roleBot.run("Nzc5NzQ1MTU0MjM5ODIzODkz.X7lAQw.30jUYIpt_Uo58CH2nzN63C136N0")
+roleBot.run("Token")
