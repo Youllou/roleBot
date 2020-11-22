@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-# Name:		   lightshotscreen
+# Name:	       RoleBot
 # Purpose:
 #
 # Author:      Youllou
