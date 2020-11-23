@@ -26,4 +26,4 @@ async def help(ctx):
 							 Use'!help_GM' to have the Game master's commands""")
 
 
-roleBot.run("Nzc5NzQ1MTU0MjM5ODIzODkz.X7lAQw.DL8WVuMFTy0cnykZWYfDLuILoVs")
+roleBot.run("Token")
