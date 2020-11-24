@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-# Name:		   user_roleBot
+# Name:			player
 # Purpose:		This bot is a discord bot
 #				it's purpose is to help admin of a role play discord server
 #				by adding some commands
@@ -14,18 +14,14 @@
 #-------------------------------------------------------------------------------
 
 
-#global imports
-import os
+#local import
 from deff import*
-import random
 
 
 #define constant
-__adventure__=("L'enferRe","Test")
-
 
 #define global variable
-cur_path = os.path.dirname(__file__)
+
 
 
 
@@ -36,20 +32,23 @@ async def help_player(ctx):
 	"""
 	await ctx.author.create_dm()
 	await ctx.author.send("""As a player you can do those commands :
-							 !join `adventure` `name` makes you join an adventure (the arguments are optionnal)
-							 !quit `adventure` `name` makes you quit an adventure (the arguments are optionnal)
-							 !inventory `adventure` `name` gives your inventory (the arguments are optionnal)""")
+							 !join `adventure` makes you join an adventure
+							 !quit `adventure` makes you quit an adventure (the argument is optionnal)
+							 !inventory `adventure` gives your inventory (the argument is optionnal)""")
 
 
 @roleBot.command()
-async def join(ctx,adventure: str = None,name: str = None):
+async def join(ctx,adventure: str = None):
 	"""
 		This command makes the user join an adventure 
 	"""
+	__adventure__=os.listdir('../'+ctx.guild.name)
+	print(__adventure__)
+
 	if adventure == None:
 		await ctx.channel.send("You must choose an adventure to join")
 	elif adventure not in __adventure__ :
-		await ctx.channel.send("This adventure does not exist yet. Ask an MJ if he can create it")
+		await ctx.channel.send("This adventure does not exist yet. Ask a GM if he can create it")
 	else :
 		for i in ctx.guild.roles:
 			if adventure == i.name :
@@ -58,31 +57,17 @@ async def join(ctx,adventure: str = None,name: str = None):
 		if adventure in ctx.author.roles :
 			await ctx.channel.send("You're already in this adventure.\nIf you wish to quit it use '!quit'")
 		else :
-			if name == None :
-				try :
-					os.mkdir(os.path.relpath("../"+adventure.name+"/Players/"+ctx.author.name,cur_path))
-				except OSError:
-					print("os error when creating dir during !join")
-					await ctx.channel.send("They were an error during directory creation\nMaybe if you try again ??\nIf it keep hapening please contact an admin")
-				else :
-					f=open(os.path.relpath("../"+adventure.name+"/Players/"+ctx.author.name+"/Inventory.csv",cur_path),"w")
-					f.write("id |name")
-					f.close()
-					await ctx.author.add_roles(adventure)
-					await ctx.channel.send("Succesfully joined "+adventure.name)
+			try :
+				os.mkdir(os.path.relpath("../"+ctx.guild.name+"/"+adventure.name+"/Players/"+str(ctx.author.id),cur_path))
+			except OSError:
+				print("os error when creating dir during !join")
+				await ctx.channel.send("They were an error during directory creation\nMaybe if you try again ??\nIf it keep happening please contact an @admin")
 			else :
-				try :
-					os.mkdir(os.path.relpath("../"+adventure.name+"/Players/"+name),cur_path)
-				except OSError:
-					print("os error when creating dir during !join")
-					await ctx.channel.send("They were an error during directory creation\nMaybe if you try again ??\nIf it keep hapening please contact an admin")
-				else :
-					f=open(os.path.relpath("../"+adventure.name+"/Players/"+name+"/Inventory.csv",cur_path),"w")
-					f.write("id |name")
-					f.close()
-					await ctx.author.add_roles(adventure)
-					await ctx.channel.send("Succesfully joined "+adventure.name)
-	
+				f=open(os.path.relpath("../"+ctx.guild.name+"/"+adventure.name+"/Players/"+str(ctx.author.id)+"/Inventory.csv",cur_path),"w")
+				f.write("id |name")
+				f.close()
+				await ctx.author.add_roles(adventure)
+				await ctx.channel.send("Succesfully joined "+adventure.name)
 
 
 
@@ -91,6 +76,9 @@ async def quit(ctx,adventure: str = None):
 	"""
 		This command makes the user quit an adventure
 	"""
+	__adventure__=os.listdir('../'+ctx.guild.name)
+	print(__adventure__)
+
 	if adventure == None:
 		await ctx.channel.send("You must choose an adventure to quit")
 	elif adventure not in __adventure__ :
@@ -103,16 +91,24 @@ async def quit(ctx,adventure: str = None):
 		if adventure not in ctx.author.roles :
 			await ctx.channel.send("You're not in this adventure.\nIf you wish to join it use '!join'")
 		else :
-			await ctx.author.remove_roles(adventure)
-			await ctx.channel.send("Succesfully quitted "+adventure.name)
+			try :
+				shutil.rmtree(os.path.relpath("../"+ctx.guild.name+"/"+adventure.name+"/Players/"+str(ctx.author.id),cur_path))
+			except OSError :
+				print("os error when deleting dir during !quit")
+				await ctx.channel.send("They were an error during directory suppression\nMaybe if you try again ??\nIf it keep happening please contact an @admin")
+			else :
+				await ctx.author.remove_roles(adventure)
+				await ctx.channel.send("Succesfully quitted "+adventure.name)
 
 
 
 @roleBot.command()
-async def inventory(ctx,adventure: str = None,name: str = None):
+async def inventory(ctx,adventure: str = None):
 	"""
 		This command gives the inventory of the user for an adventure
 	"""
+	__adventure__=os.listdir('../'+ctx.guild.name)
+	print(__adventure__)
 
 	#define some variables
 	allinfo = []
@@ -134,44 +130,23 @@ async def inventory(ctx,adventure: str = None,name: str = None):
 		else :
 			adventure=tmp
 
-	#seeking if the user specified a name
-	#(this is usefull if users have a different name in the role play tho, for now, it gives the opportunity to everyone to see everyone's inventory)
-	#as for the adventure if no name is given, the bot will search with the user name if nothing found he will ask to specify
-	#if specified he will search with the name given
-	if name == None:
-		try :
-			#searching for the file
-			f=open(os.path.relpath("../"+adventure+"/Players/"+ctx.author.name+"/Inventory.csv",cur_path),"r",encoding="UTF-8")
-			while 1:
-				info = f.readline()
-				if info =="":
-					break
-				else :
-					allinfo+=[info.split("|")]
-			#output if found
-			await ctx.channel.send("Here is what you have :")
-			sentence = "```"
-			for i in range(len(allinfo)):
-				sentence += allinfo[i][0]+"|"+allinfo[i][1]
-			sentence += "```"
-			await ctx.channel.send(sentence)
-		except FileNotFoundError:
-			#output if not found
-			await ctx.channel.send("Your inventory has not been found\nAre you sure you are in this adventure ?\nYes ? then try to add your role name")
+	try :
+		#searching for the file
+		f=open(os.path.relpath("../"+ctx.guild.name+"/"+adventure+"/Players/"+str(ctx.author.id)+"/Inventory.csv",cur_path),"r",encoding="UTF-8")
+	except FileNotFoundError:
+		#output if not found
+		await ctx.channel.send("Your inventory has not been found\nAre you sure you are in this adventure ?\nYes ? then try to add your role name")
 	else :
-		try :
-			f=open(os.path.relpath("../"+adventure+"/Players/"+name+"/Inventory.csv",cur_path),"r",encoding='UTF-8')
-			while 1:
-				info = f.readline()
-				if info =="":
-					break
-				else :
-					allinfo+=[info.split("|")]
-			await ctx.channel.send("Here is what you have :")
-			sentence = "```"
-			for i in range(len(allinfo)):
-				sentence += allinfo[i][0]+"|"+allinfo[i][1]
-			sentence += "```"
-			await ctx.channel.send(sentence)
-		except FileNotFoundError:
-			await ctx.channel.send("Your inventory has not been found\nAre you sure you are in this adventure ?")
+		while 1:
+			info = f.readline()
+			if info =="":
+				break
+			else :
+				allinfo+=[info.split("|")]
+		#output if found
+		sentence = "```"
+		for i in range(len(allinfo)):
+			sentence += allinfo[i][0]+"|"+allinfo[i][1]
+		sentence += "```"
+		await ctx.channel.send("Here is what you have for "+adventure+" :")
+		await ctx.channel.send(sentence)
