@@ -17,6 +17,18 @@
 
 from deff import *
 from player import *
+from game_master import *
+
+
+@roleBot.event
+async def on_guild_join(guild):
+	os.mkdir(os.path.relpath("../"+guild.name,cur_path))
+	print(guild.name+" joined")
+
+@roleBot.event
+async def on_guild_delete(guild):
+	shutil.rmtree(os.path.relpath("../"+guild.name,cur_path))
+	print(guild.name+" quitted")
 
 @roleBot.command()
 async def help(ctx):
